@@ -8,7 +8,7 @@ STEP11（R2アップロード）とSTEP10（POST /posts）を繋ぎ、
 ## ディレクトリ構成（差分）
 
 ```
-my-app/
+catroom/
 └── src/
     ├── lib/
     │   ├── api.ts        ← 新規作成（API呼び出し・URL一元管理）
@@ -25,7 +25,7 @@ STEP11では `upload.ts` に直接URLを書いていたが、
 `api.ts` に移動してURLを1箇所で管理するよう変更。
 
 ```ts
-// my-app/src/lib/api.ts
+// catroom/src/lib/api.ts
 // PC確認時   → 'http://localhost:3000'
 // Expo Go時  → 'http://192.168.x.x:3000'
 export const API_BASE_URL = 'http://localhost:3000'

@@ -8,17 +8,28 @@ export type CreatePostRequest = {
     comment: string
 }
 
-export type CreatePostResponse = {
+export type PostResponse = {
     id: string
     image_url: string
     comment: string
     created_at: string
 }
 
+// GET /posts
+export const getPosts = async (): Promise<PostResponse[]> => {
+    const res = await fetch(`${API_BASE_URL}/posts`)
+
+    if (!res.ok) {
+        throw new Error(`Failed to fetch posts: ${res.status}`)
+    }
+
+    return res.json()
+}
+
 // POST /posts
 export const createPost = async (
     body: CreatePostRequest,
-): Promise<CreatePostResponse> => {
+): Promise<PostResponse> => {
     const res = await fetch(`${API_BASE_URL}/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
