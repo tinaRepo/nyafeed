@@ -8,44 +8,42 @@ type Props = {
 };
 
 export default function CatCard({ cat }: Props) {
-    // リアクション数（カード単位で管理）
     const [reactions, setReactions] = useState<Reactions>({ ...cat.reactions });
-    // 押したボタンのSet（トグル管理）
     const [activeKeys, setActiveKeys] = useState<Set<ReactionKey>>(new Set());
 
-    const handleReact = (key: ReactionKey) => {
-        const isActive = activeKeys.has(key);
+    const handleReact = (key: ReactionKey, updatedReactions?: Reactions) => {
+        if (updatedReactions) {
+            // APIレスポンスの正確な数値で上書き
+            setReactions(updatedReactions)
+        } else {
+            // 楽観更新（API応答前の即時反映）
+            const isActive = activeKeys.has(key)
+            setReactions((prev) => ({
+                ...prev,
+                [key]: isActive ? prev[key] - 1 : prev[key] + 1,
+            }))
+        }
 
-        // カウント増減
-        setReactions((prev) => ({
-            ...prev,
-            [key]: isActive ? prev[key] - 1 : prev[key] + 1,
-        }));
-
-        // アクティブ状態トグル
+        // アクティブ状態のトグル
         setActiveKeys((prev) => {
-            const next = new Set(prev);
-            isActive ? next.delete(key) : next.add(key);
-            return next;
-        });
-    };
+            const next = new Set(prev)
+            activeKeys.has(key) ? next.delete(key) : next.add(key)
+            return next
+        })
+    }
 
     return (
         <View style={styles.card}>
-            {/* 猫画像 */}
             <Image
                 source={{ uri: cat.imageUrl }}
                 style={styles.image}
                 resizeMode="cover"
             />
-
-            {/* コメント */}
             <View style={styles.commentRow}>
                 <Text style={styles.comment}>{cat.comment}</Text>
             </View>
-
-            {/* リアクションバー */}
             <ReactionBar
+                postId={cat.id}
                 reactions={reactions}
                 activeKeys={activeKeys}
                 onReact={handleReact}

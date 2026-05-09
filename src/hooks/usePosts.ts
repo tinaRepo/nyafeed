@@ -12,16 +12,24 @@ const DEFAULT_REACTIONS: Reactions = {
     fluffy: 0,
 }
 
+// toCat関数を修正（APIのreactionsをそのまま使う）
 const toCat = (p: {
     id: string
     image_url: string
     comment: string
     created_at: string
+    reactions: Record<string, number>
 }): Cat => ({
     id: p.id,
     imageUrl: p.image_url,
     comment: p.comment,
-    reactions: { ...DEFAULT_REACTIONS },
+    reactions: {
+        cute: p.reactions['cute'] ?? 0,
+        sniff: p.reactions['sniff'] ?? 0,
+        healing: p.reactions['healing'] ?? 0,
+        pressure: p.reactions['pressure'] ?? 0,
+        fluffy: p.reactions['fluffy'] ?? 0,
+    },
 })
 
 type FetchState =
