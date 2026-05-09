@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+    ActivityIndicator,
     Modal,
     Pressable,
     ScrollView,
@@ -11,6 +12,7 @@ import {
 } from 'react-native';
 import { Cat, Reactions } from '../types/cat';
 import ImagePickerComponent, { PickedImage } from './ImagePicker';
+import { uploadImage } from '../lib/upload';
 
 const DUMMY_IMAGE_POOL = [
     'https://placecats.com/406/300',
@@ -28,6 +30,11 @@ const DEFAULT_REACTIONS: Reactions = {
     fluffy: 0,
 };
 
+type UploadState =
+    | { status: 'idle' }
+    | { status: 'uploading' }
+    | { status: 'error'; message: string }
+
 type Props = {
     visible: boolean;
     onClose: () => void;
@@ -38,32 +45,53 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
     const [comment, setComment] = useState('');
     const [pickedImage, setPickedImage] = useState<PickedImage | null>(null);
     const [commentError, setCommentError] = useState('');
+    const [uploadState, setUploadState] = useState<UploadState>({ status: 'idle' });
 
-    const handleSubmit = () => {
+    const isUploading = uploadState.status === 'uploading'
+
+    const handleSubmit = async () => {
         if (!comment.trim()) {
             setCommentError('コメントを入力してください');
             return;
         }
 
-        const imageUrl =
-            pickedImage?.uri ??
-            DUMMY_IMAGE_POOL[Math.floor(Math.random() * DUMMY_IMAGE_POOL.length)];
+        setUploadState({ status: 'uploading' });
 
-        const newCat: Cat = {
-            id: `post-${Date.now()}`,
-            imageUrl,
-            comment: comment.trim(),
-            reactions: { ...DEFAULT_REACTIONS },
-        };
+        try {
+            let imageUrl: string
 
-        onSubmit(newCat);
-        handleClose();
+            if (pickedImage) {
+                // 画像が選択されている場合はR2にアップロード
+                imageUrl = await uploadImage(pickedImage.uri, pickedImage.mimeType)
+            } else {
+                // 未選択の場合はダミー画像
+                imageUrl = DUMMY_IMAGE_POOL[
+                    Math.floor(Math.random() * DUMMY_IMAGE_POOL.length)
+                ] as string
+            }
+
+            const newCat: Cat = {
+                id: `post-${Date.now()}`,
+                imageUrl,
+                comment: comment.trim(),
+                reactions: { ...DEFAULT_REACTIONS },
+            };
+
+            onSubmit(newCat);
+            handleClose();
+
+        } catch (e) {
+            const message = e instanceof Error ? e.message : 'アップロードに失敗しました'
+            setUploadState({ status: 'error', message })
+        }
     };
 
     const handleClose = () => {
+        if (isUploading) return  // アップロード中は閉じない
         setComment('');
         setPickedImage(null);
         setCommentError('');
+        setUploadState({ status: 'idle' });
         onClose();
     };
 
@@ -74,7 +102,10 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
             animationType="slide"
             onRequestClose={handleClose}
         >
-            <Pressable style={styles.overlay} onPress={handleClose} />
+            <Pressable
+                style={styles.overlay}
+                onPress={handleClose}
+            />
 
             <View style={styles.sheet}>
                 <ScrollView
@@ -84,12 +115,16 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
                     {/* ヘッダー */}
                     <View style={styles.sheetHeader}>
                         <Text style={styles.sheetTitle}>🐾 猫を投稿する</Text>
-                        <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
+                        <TouchableOpacity
+                            onPress={handleClose}
+                            style={styles.closeBtn}
+                            disabled={isUploading}
+                        >
                             <Text style={styles.closeBtnText}>✕</Text>
                         </TouchableOpacity>
                     </View>
 
-                    {/* 画像選択（ImagePickerに差し替え） */}
+                    {/* 画像選択 */}
                     <View style={styles.section}>
                         <Text style={styles.label}>猫画像</Text>
                         <ImagePickerComponent
@@ -113,6 +148,7 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
                             multiline
                             numberOfLines={3}
                             maxLength={100}
+                            editable={!isUploading}
                         />
                         <View style={styles.inputMeta}>
                             {commentError ? (
@@ -123,17 +159,37 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
                         </View>
                     </View>
 
+                    {/* アップロードエラー表示 */}
+                    {uploadState.status === 'error' && (
+                        <View style={styles.uploadErrorBox}>
+                            <Text style={styles.uploadErrorText}>
+                                ⚠️ {uploadState.message}
+                            </Text>
+                            <TouchableOpacity onPress={() => setUploadState({ status: 'idle' })}>
+                                <Text style={styles.retryText}>再試行</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+
                     {/* 投稿ボタン */}
                     <TouchableOpacity
                         style={[
                             styles.submitBtn,
-                            !comment.trim() && styles.submitBtnDisabled,
+                            (!comment.trim() || isUploading) && styles.submitBtnDisabled,
                         ]}
                         onPress={handleSubmit}
-                        disabled={!comment.trim()}
+                        disabled={!comment.trim() || isUploading}
                     >
-                        <Text style={styles.submitBtnText}>投稿する 🐱</Text>
+                        {isUploading ? (
+                            <View style={styles.loadingRow}>
+                                <ActivityIndicator color="#fff" size="small" />
+                                <Text style={styles.submitBtnText}>アップロード中…</Text>
+                            </View>
+                        ) : (
+                            <Text style={styles.submitBtnText}>投稿する 🐱</Text>
+                        )}
                     </TouchableOpacity>
+
                 </ScrollView>
             </View>
         </Modal>
@@ -207,6 +263,28 @@ const styles = StyleSheet.create({
         fontSize: 11,
         color: '#bbb',
     },
+    uploadErrorBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 16,
+        padding: 10,
+        backgroundColor: '#fff5f5',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#fca5a5',
+    },
+    uploadErrorText: {
+        fontSize: 12,
+        color: '#ef4444',
+        flex: 1,
+    },
+    retryText: {
+        fontSize: 12,
+        color: '#f97316',
+        fontWeight: 'bold',
+        marginLeft: 8,
+    },
     submitBtn: {
         backgroundColor: '#f97316',
         borderRadius: 12,
@@ -220,5 +298,10 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: 'bold',
         color: '#fff',
+    },
+    loadingRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
     },
 });
