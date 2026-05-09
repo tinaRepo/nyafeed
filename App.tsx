@@ -1,4 +1,13 @@
-import { StyleSheet, View, ScrollView, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+  ActivityIndicator,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import Header from './src/components/Header';
@@ -7,17 +16,52 @@ import PostModal from './src/components/PostModal';
 import { usePosts } from './src/hooks/usePosts';
 import { Cat } from './src/types/cat';
 
+// 末尾から何px以内でfetchMoreを呼ぶか
+const LOAD_MORE_THRESHOLD = 300
+
 export default function App() {
   const [modalVisible, setModalVisible] = useState(false);
-  const { cats, fetchState, fetchPosts, addPost } = usePosts()
+  const { cats, fetchState, hasMore, fetchPosts, fetchMore, addPost } = usePosts()
 
   const handleSubmit = (newCat: Cat) => {
     addPost(newCat)
   }
 
+  // スクロール末尾検知
+  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent
+    const distanceFromBottom =
+      contentSize.height - contentOffset.y - layoutMeasurement.height
+
+    if (distanceFromBottom < LOAD_MORE_THRESHOLD) {
+      fetchMore()
+    }
+  }
+
+  const renderFooter = () => {
+    // 追加取得中
+    if (fetchState.status === 'loadingMore') {
+      return (
+        <View style={styles.footer}>
+          <ActivityIndicator size="small" color="#f97316" />
+          <Text style={styles.footerText}>読み込み中…</Text>
+        </View>
+      )
+    }
+    // 全件取得済み
+    if (!hasMore && cats.length > 0) {
+      return (
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>🐾 全部見たにゃ！</Text>
+        </View>
+      )
+    }
+    return null
+  }
+
   const renderContent = () => {
     // 初回ローディング
-    if (fetchState.status === 'loading' && cats.length === 0) {
+    if (fetchState.status === 'loading') {
       return (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#f97316" />
@@ -26,7 +70,7 @@ export default function App() {
       )
     }
 
-    // エラー
+    // エラー（初回）
     if (fetchState.status === 'error' && cats.length === 0) {
       return (
         <View style={styles.centered}>
@@ -39,7 +83,7 @@ export default function App() {
       )
     }
 
-    // 投稿なし
+    // 投稿ゼロ
     if (fetchState.status === 'success' && cats.length === 0) {
       return (
         <View style={styles.centered}>
@@ -50,15 +94,18 @@ export default function App() {
       )
     }
 
-    // フィード表示
+    // フィード
     return (
       <ScrollView
         style={styles.feed}
         contentContainerStyle={styles.feedContent}
+        onScroll={handleScroll}
+        scrollEventThrottle={200}  // 200msごとにイベント発火
       >
         {cats.map((cat) => (
           <CatCard key={cat.id} cat={cat} />
         ))}
+        {renderFooter()}
       </ScrollView>
     )
   }
@@ -138,6 +185,17 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   emptySubText: {
+    fontSize: 13,
+    color: '#aaa',
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 20,
+  },
+  footerText: {
     fontSize: 13,
     color: '#aaa',
   },
