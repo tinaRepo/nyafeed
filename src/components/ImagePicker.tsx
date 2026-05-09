@@ -1,11 +1,13 @@
 import { useRef, useState } from 'react';
 import {
     Image,
+    Platform,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
+import * as ExpoImagePicker from 'expo-image-picker';
 
 export type PickedImage = {
     uri: string;
@@ -29,10 +31,14 @@ const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export default function ImagePickerComponent({ value, onChange }: Props) {
+    // Web専用ref（ネイティブでは使用しない）
     const inputRef = useRef<HTMLInputElement>(null);
     const [validationError, setValidationError] = useState('');
-    const [isHovered, setIsHovered] = useState(false); // ← ホバー状態を自前管理
+    const [isHovered, setIsHovered] = useState(false);
 
+    // ─────────────────────────────────────────
+    // Web：File input ハンドラ
+    // ─────────────────────────────────────────
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setValidationError('');
         const file = e.target.files?.[0];
@@ -43,7 +49,6 @@ export default function ImagePickerComponent({ value, onChange }: Props) {
             e.target.value = '';
             return;
         }
-
         if (file.size > MAX_FILE_SIZE) {
             setValidationError(
                 `ファイルサイズは10MB以内にしてください（現在: ${formatBytes(file.size)}）`
@@ -52,34 +57,71 @@ export default function ImagePickerComponent({ value, onChange }: Props) {
             return;
         }
 
-        if (value?.uri) {
-            URL.revokeObjectURL(value.uri);
-        }
+        if (value?.uri) URL.revokeObjectURL(value.uri);
 
-        const uri = URL.createObjectURL(file);
         onChange({
-            uri,
+            uri: URL.createObjectURL(file),
             fileName: file.name,
             fileSize: file.size,
             mimeType: file.type,
         });
-
         e.target.value = '';
     };
 
+    // ─────────────────────────────────────────
+    // ネイティブ（iOS / Android）：expo-image-picker
+    // ─────────────────────────────────────────
+    const handleNativePick = async () => {
+        setValidationError('');
+
+        // カメラロールへのアクセス許可
+        const { status } =
+            await ExpoImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            setValidationError('画像ライブラリへのアクセスを許可してください');
+            return;
+        }
+
+        const result = await ExpoImagePicker.launchImageLibraryAsync({
+            mediaTypes: ExpoImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            quality: 0.8,
+        });
+
+        if (result.canceled) return;
+
+        const asset = result.assets[0];
+        onChange({
+            uri: asset.uri,
+            fileName: asset.fileName ?? `photo_${Date.now()}.jpg`,
+            fileSize: asset.fileSize ?? 0,
+            mimeType: asset.mimeType ?? 'image/jpeg',
+        });
+    };
+
+    // ─────────────────────────────────────────
+    // 統合：Platform で分岐して呼び出す
+    // ─────────────────────────────────────────
+    const handleAreaClick = () => {
+        if (Platform.OS === 'web') {
+            inputRef.current?.click(); // Web: 隠しinputをクリック
+        } else {
+            handleNativePick();        // ネイティブ: expo-image-picker
+        }
+    };
+
     const handleRemove = () => {
-        if (value?.uri) {
+        // ObjectURLはWebのみ存在するため分岐
+        if (Platform.OS === 'web' && value?.uri) {
             URL.revokeObjectURL(value.uri);
         }
         onChange(null);
         setValidationError('');
     };
 
-    const handleAreaClick = () => {
-        inputRef.current?.click();
-    };
-
+    // ─────────────────────────────────────────
     // 画像選択済み：プレビュー表示
+    // ─────────────────────────────────────────
     if (value) {
         return (
             <View style={styles.previewContainer}>
@@ -93,7 +135,11 @@ export default function ImagePickerComponent({ value, onChange }: Props) {
                         <Text style={styles.fileName} numberOfLines={1}>
                             📎 {value.fileName}
                         </Text>
-                        <Text style={styles.fileSize}>{formatBytes(value.fileSize)}</Text>
+                        {value.fileSize > 0 && (
+                            <Text style={styles.fileSize}>
+                                {formatBytes(value.fileSize)}
+                            </Text>
+                        )}
                     </View>
                     <View style={styles.fileInfoRight}>
                         <TouchableOpacity
@@ -110,18 +156,24 @@ export default function ImagePickerComponent({ value, onChange }: Props) {
                         </TouchableOpacity>
                     </View>
                 </View>
-                <input
-                    ref={inputRef}
-                    type="file"
-                    accept={ACCEPTED_TYPES.join(',')}
-                    onChange={handleFileChange}
-                    style={{ display: 'none' }}
-                />
+
+                {/* Web専用隠しinput（変更ボタン用） */}
+                {Platform.OS === 'web' && (
+                    <input
+                        ref={inputRef}
+                        type="file"
+                        accept={ACCEPTED_TYPES.join(',')}
+                        onChange={handleFileChange}
+                        style={{ display: 'none' }}
+                    />
+                )}
             </View>
         );
     }
 
+    // ─────────────────────────────────────────
     // 未選択：選択エリア表示
+    // ─────────────────────────────────────────
     return (
         <View>
             <TouchableOpacity
@@ -134,18 +186,30 @@ export default function ImagePickerComponent({ value, onChange }: Props) {
             >
                 <Text style={styles.dropIcon}>🐱</Text>
                 <Text style={styles.dropTitle}>猫画像を選択</Text>
-                <Text style={styles.dropSub}>タップしてギャラリーから選ぶ</Text>
-                <Text style={styles.dropMeta}>JPEG / PNG / GIF / WebP・10MBまで</Text>
+                <Text style={styles.dropSub}>
+                    {Platform.OS === 'web'
+                        ? 'タップしてギャラリーから選ぶ'
+                        : 'タップしてライブラリから選ぶ'}
+                </Text>
+                <Text style={styles.dropMeta}>
+                    {Platform.OS === 'web'
+                        ? 'JPEG / PNG / GIF / WebP・10MBまで'
+                        : 'JPEG / PNG'}
+                </Text>
                 <View style={styles.dropBadge}>
                     <Text style={styles.dropBadgeText}>ファイルを選択</Text>
                 </View>
-                <input
-                    ref={inputRef}
-                    type="file"
-                    accept={ACCEPTED_TYPES.join(',')}
-                    onChange={handleFileChange}
-                    style={hiddenInputStyle}
-                />
+
+                {/* Web専用隠しinput（選択エリア全面タップ用） */}
+                {Platform.OS === 'web' && (
+                    <input
+                        ref={inputRef}
+                        type="file"
+                        accept={ACCEPTED_TYPES.join(',')}
+                        onChange={handleFileChange}
+                        style={hiddenInputStyle}
+                    />
+                )}
             </TouchableOpacity>
 
             {validationError ? (
