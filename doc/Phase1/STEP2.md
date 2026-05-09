@@ -1,4 +1,4 @@
-# Phase1-STEP1
+# Phase1-STEP2
 - 起動確認
 ```bash
 # Web専用で起動
