@@ -1,28 +1,33 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import Header from './src/components/Header';
+import CatCard from './src/components/CatCard';
+import { dummyCats } from './src/data/dummyCats';
 
 export default function App() {
-    return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Phase1-STEP1</Text>
-            <Text style={styles.subtitle}>Web Expo 初期構築 ✅</Text>
-        </View>
-    );
+  return (
+    <View style={styles.container}>
+      <Header />
+      <ScrollView
+        style={styles.feed}
+        contentContainerStyle={styles.feedContent}
+      >
+        {dummyCats.map((cat) => (
+          <CatCard key={cat.id} cat={cat} />
+        ))}
+      </ScrollView>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#fff',
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 8,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: '#555',
-    },
+  container: {
+    flex: 1,
+    backgroundColor: '#f7f7f7',
+  },
+  feed: {
+    flex: 1,
+  },
+  feedContent: {
+    paddingVertical: 12,
+  },
 });
