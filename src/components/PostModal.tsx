@@ -13,6 +13,7 @@ import {
 import { Cat, Reactions } from '../types/cat';
 import ImagePickerComponent, { PickedImage } from './ImagePicker';
 import { uploadImage } from '../lib/upload';
+import { createPost } from '../lib/api';
 
 const DUMMY_IMAGE_POOL = [
     'https://placecats.com/406/300',
@@ -30,9 +31,11 @@ const DEFAULT_REACTIONS: Reactions = {
     fluffy: 0,
 };
 
+// アップロード状態をステップで管理
 type UploadState =
     | { status: 'idle' }
-    | { status: 'uploading' }
+    | { status: 'uploading_image' }   // R2アップロード中
+    | { status: 'saving_post' }       // API保存中
     | { status: 'error'; message: string }
 
 type Props = {
@@ -47,7 +50,13 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
     const [commentError, setCommentError] = useState('');
     const [uploadState, setUploadState] = useState<UploadState>({ status: 'idle' });
 
-    const isUploading = uploadState.status === 'uploading'
+    const isLoading = uploadState.status === 'uploading_image'
+        || uploadState.status === 'saving_post'
+
+    // ローディングメッセージをステップに応じて切り替え
+    const loadingMessage = uploadState.status === 'uploading_image'
+        ? '画像をアップロード中…'
+        : '投稿を保存中…'
 
     const handleSubmit = async () => {
         if (!comment.trim()) {
@@ -55,39 +64,45 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
             return;
         }
 
-        setUploadState({ status: 'uploading' });
-
         try {
+            // STEP1: 画像アップロード（R2）
             let imageUrl: string
 
             if (pickedImage) {
-                // 画像が選択されている場合はR2にアップロード
+                setUploadState({ status: 'uploading_image' })
                 imageUrl = await uploadImage(pickedImage.uri, pickedImage.mimeType)
             } else {
-                // 未選択の場合はダミー画像
                 imageUrl = DUMMY_IMAGE_POOL[
                     Math.floor(Math.random() * DUMMY_IMAGE_POOL.length)
                 ] as string
             }
 
-            const newCat: Cat = {
-                id: `post-${Date.now()}`,
-                imageUrl,
+            // STEP2: API送信（DB保存）
+            setUploadState({ status: 'saving_post' })
+            const created = await createPost({
+                image_url: imageUrl,
                 comment: comment.trim(),
-                reactions: { ...DEFAULT_REACTIONS },
-            };
+            })
 
-            onSubmit(newCat);
-            handleClose();
+            // STEP3: フィードに反映
+            const newCat: Cat = {
+                id: created.id,
+                imageUrl: created.image_url,
+                comment: created.comment,
+                reactions: { ...DEFAULT_REACTIONS },
+            }
+
+            onSubmit(newCat)
+            handleClose()
 
         } catch (e) {
-            const message = e instanceof Error ? e.message : 'アップロードに失敗しました'
+            const message = e instanceof Error ? e.message : '投稿に失敗しました'
             setUploadState({ status: 'error', message })
         }
     };
 
     const handleClose = () => {
-        if (isUploading) return  // アップロード中は閉じない
+        if (isLoading) return
         setComment('');
         setPickedImage(null);
         setCommentError('');
@@ -102,10 +117,7 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
             animationType="slide"
             onRequestClose={handleClose}
         >
-            <Pressable
-                style={styles.overlay}
-                onPress={handleClose}
-            />
+            <Pressable style={styles.overlay} onPress={handleClose} />
 
             <View style={styles.sheet}>
                 <ScrollView
@@ -118,7 +130,7 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
                         <TouchableOpacity
                             onPress={handleClose}
                             style={styles.closeBtn}
-                            disabled={isUploading}
+                            disabled={isLoading}
                         >
                             <Text style={styles.closeBtnText}>✕</Text>
                         </TouchableOpacity>
@@ -148,7 +160,7 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
                             multiline
                             numberOfLines={3}
                             maxLength={100}
-                            editable={!isUploading}
+                            editable={!isLoading}
                         />
                         <View style={styles.inputMeta}>
                             {commentError ? (
@@ -159,13 +171,15 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
                         </View>
                     </View>
 
-                    {/* アップロードエラー表示 */}
+                    {/* エラー表示 */}
                     {uploadState.status === 'error' && (
-                        <View style={styles.uploadErrorBox}>
-                            <Text style={styles.uploadErrorText}>
+                        <View style={styles.errorBox}>
+                            <Text style={styles.errorBoxText}>
                                 ⚠️ {uploadState.message}
                             </Text>
-                            <TouchableOpacity onPress={() => setUploadState({ status: 'idle' })}>
+                            <TouchableOpacity
+                                onPress={() => setUploadState({ status: 'idle' })}
+                            >
                                 <Text style={styles.retryText}>再試行</Text>
                             </TouchableOpacity>
                         </View>
@@ -175,15 +189,15 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
                     <TouchableOpacity
                         style={[
                             styles.submitBtn,
-                            (!comment.trim() || isUploading) && styles.submitBtnDisabled,
+                            (!comment.trim() || isLoading) && styles.submitBtnDisabled,
                         ]}
                         onPress={handleSubmit}
-                        disabled={!comment.trim() || isUploading}
+                        disabled={!comment.trim() || isLoading}
                     >
-                        {isUploading ? (
+                        {isLoading ? (
                             <View style={styles.loadingRow}>
                                 <ActivityIndicator color="#fff" size="small" />
-                                <Text style={styles.submitBtnText}>アップロード中…</Text>
+                                <Text style={styles.submitBtnText}>{loadingMessage}</Text>
                             </View>
                         ) : (
                             <Text style={styles.submitBtnText}>投稿する 🐱</Text>
@@ -263,7 +277,7 @@ const styles = StyleSheet.create({
         fontSize: 11,
         color: '#bbb',
     },
-    uploadErrorBox: {
+    errorBox: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -274,7 +288,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#fca5a5',
     },
-    uploadErrorText: {
+    errorBoxText: {
         fontSize: 12,
         color: '#ef4444',
         flex: 1,
