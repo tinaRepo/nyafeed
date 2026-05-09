@@ -2,17 +2,16 @@ import { useState } from 'react';
 import {
     Modal,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
     View,
-    Image,
-    ScrollView,
 } from 'react-native';
 import { Cat, Reactions } from '../types/cat';
+import ImagePickerComponent, { PickedImage } from './ImagePicker';
 
-// 投稿時のダミー画像プール（画像未選択時のフォールバック）
 const DUMMY_IMAGE_POOL = [
     'https://placecats.com/406/300',
     'https://placecats.com/407/300',
@@ -37,28 +36,17 @@ type Props = {
 
 export default function PostModal({ visible, onClose, onSubmit }: Props) {
     const [comment, setComment] = useState('');
-    const [selectedImage, setSelectedImage] = useState<string | null>(null);
-    const [previewFile, setPreviewFile] = useState<string | null>(null);
-    const [error, setError] = useState('');
-
-    // ファイル選択ハンドラ（Web: input[type=file]）
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        const objectUrl = URL.createObjectURL(file);
-        setPreviewFile(objectUrl);
-        setSelectedImage(objectUrl);
-    };
+    const [pickedImage, setPickedImage] = useState<PickedImage | null>(null);
+    const [commentError, setCommentError] = useState('');
 
     const handleSubmit = () => {
         if (!comment.trim()) {
-            setError('コメントを入力してください');
+            setCommentError('コメントを入力してください');
             return;
         }
 
-        // 画像未選択ならダミープールからランダム取得
         const imageUrl =
-            selectedImage ??
+            pickedImage?.uri ??
             DUMMY_IMAGE_POOL[Math.floor(Math.random() * DUMMY_IMAGE_POOL.length)];
 
         const newCat: Cat = {
@@ -74,9 +62,8 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
 
     const handleClose = () => {
         setComment('');
-        setSelectedImage(null);
-        setPreviewFile(null);
-        setError('');
+        setPickedImage(null);
+        setCommentError('');
         onClose();
     };
 
@@ -87,10 +74,8 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
             animationType="slide"
             onRequestClose={handleClose}
         >
-            {/* 背景オーバーレイ */}
             <Pressable style={styles.overlay} onPress={handleClose} />
 
-            {/* モーダル本体 */}
             <View style={styles.sheet}>
                 <ScrollView
                     contentContainerStyle={styles.inner}
@@ -104,54 +89,24 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
                         </TouchableOpacity>
                     </View>
 
-                    {/* 画像プレビュー / 選択エリア */}
-                    <View style={styles.imageArea}>
-                        {previewFile ? (
-                            <>
-                                <Image
-                                    source={{ uri: previewFile }}
-                                    style={styles.preview}
-                                    resizeMode="cover"
-                                />
-                                <TouchableOpacity
-                                    style={styles.removeImageBtn}
-                                    onPress={() => {
-                                        setPreviewFile(null);
-                                        setSelectedImage(null);
-                                    }}
-                                >
-                                    <Text style={styles.removeImageText}>画像を変更</Text>
-                                </TouchableOpacity>
-                            </>
-                        ) : (
-                            <View style={styles.imagePlaceholder}>
-                                <Text style={styles.imagePlaceholderIcon}>📷</Text>
-                                <Text style={styles.imagePlaceholderText}>
-                                    画像を選択（省略可）
-                                </Text>
-                                <Text style={styles.imagePlaceholderSub}>
-                                    未選択の場合はダミー画像が使われます
-                                </Text>
-                                {/* Web専用: input[type=file] をネイティブ要素で配置 */}
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleFileChange}
-                                    style={webFileInputStyle}
-                                />
-                            </View>
-                        )}
+                    {/* 画像選択（ImagePickerに差し替え） */}
+                    <View style={styles.section}>
+                        <Text style={styles.label}>猫画像</Text>
+                        <ImagePickerComponent
+                            value={pickedImage}
+                            onChange={setPickedImage}
+                        />
                     </View>
 
                     {/* コメント入力 */}
-                    <View style={styles.inputArea}>
+                    <View style={styles.section}>
                         <Text style={styles.label}>コメント *</Text>
                         <TextInput
-                            style={[styles.input, error ? styles.inputError : null]}
+                            style={[styles.input, commentError ? styles.inputError : null]}
                             value={comment}
                             onChangeText={(text) => {
                                 setComment(text);
-                                if (error) setError('');
+                                if (commentError) setCommentError('');
                             }}
                             placeholder="この子についてひとこと…"
                             placeholderTextColor="#bbb"
@@ -160,8 +115,8 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
                             maxLength={100}
                         />
                         <View style={styles.inputMeta}>
-                            {error ? (
-                                <Text style={styles.errorText}>{error}</Text>
+                            {commentError ? (
+                                <Text style={styles.errorText}>{commentError}</Text>
                             ) : (
                                 <Text style={styles.charCount}>{comment.length} / 100</Text>
                             )}
@@ -184,17 +139,6 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
         </Modal>
     );
 }
-
-// Web専用: input[type=file] スタイル（全面タップ可能に）
-const webFileInputStyle: React.CSSProperties = {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    opacity: 0,
-    cursor: 'pointer',
-};
 
 const styles = StyleSheet.create({
     overlay: {
@@ -222,61 +166,19 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#333',
     },
-    closeBtn: {
-        padding: 4,
-    },
+    closeBtn: { padding: 4 },
     closeBtnText: {
         fontSize: 18,
         color: '#999',
     },
-    imageArea: {
-        borderRadius: 12,
-        overflow: 'hidden',
-        marginBottom: 16,
-        backgroundColor: '#f7f7f7',
-        borderWidth: 1,
-        borderColor: '#eee',
-        borderStyle: 'dashed',
-    },
-    imagePlaceholder: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 32,
-        position: 'relative', // input重ね用
-    },
-    imagePlaceholderIcon: {
-        fontSize: 36,
-        marginBottom: 8,
-    },
-    imagePlaceholderText: {
-        fontSize: 14,
-        color: '#888',
-        marginBottom: 4,
-    },
-    imagePlaceholderSub: {
-        fontSize: 11,
-        color: '#bbb',
-    },
-    preview: {
-        width: '100%',
-        height: 200,
-    },
-    removeImageBtn: {
-        alignItems: 'center',
-        paddingVertical: 8,
-    },
-    removeImageText: {
-        fontSize: 13,
-        color: '#f97316',
-    },
-    inputArea: {
+    section: {
         marginBottom: 20,
     },
     label: {
         fontSize: 13,
         fontWeight: 'bold',
         color: '#555',
-        marginBottom: 6,
+        marginBottom: 8,
     },
     input: {
         borderWidth: 1,
