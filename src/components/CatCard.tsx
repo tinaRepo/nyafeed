@@ -1,43 +1,55 @@
 import { useState } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Cat } from '../types/cat';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import { Cat, ReactionKey, Reactions } from '../types/cat';
+import ReactionBar from './ReactionBar';
 
 type Props = {
     cat: Cat;
 };
 
 export default function CatCard({ cat }: Props) {
-    const [reactions, setReactions] = useState(cat.reactions);
-    const [reacted, setReacted] = useState(false);
+    // リアクション数（カード単位で管理）
+    const [reactions, setReactions] = useState<Reactions>({ ...cat.reactions });
+    // 押したボタンのSet（トグル管理）
+    const [activeKeys, setActiveKeys] = useState<Set<ReactionKey>>(new Set());
 
-    const handleReaction = () => {
-        if (reacted) {
-            setReactions((prev) => prev - 1);
-            setReacted(false);
-        } else {
-            setReactions((prev) => prev + 1);
-            setReacted(true);
-        }
+    const handleReact = (key: ReactionKey) => {
+        const isActive = activeKeys.has(key);
+
+        // カウント増減
+        setReactions((prev) => ({
+            ...prev,
+            [key]: isActive ? prev[key] - 1 : prev[key] + 1,
+        }));
+
+        // アクティブ状態トグル
+        setActiveKeys((prev) => {
+            const next = new Set(prev);
+            isActive ? next.delete(key) : next.add(key);
+            return next;
+        });
     };
 
     return (
         <View style={styles.card}>
+            {/* 猫画像 */}
             <Image
                 source={{ uri: cat.imageUrl }}
                 style={styles.image}
                 resizeMode="cover"
             />
-            <View style={styles.body}>
+
+            {/* コメント */}
+            <View style={styles.commentRow}>
                 <Text style={styles.comment}>{cat.comment}</Text>
-                <TouchableOpacity
-                    style={[styles.reactionBtn, reacted && styles.reactionBtnActive]}
-                    onPress={handleReaction}
-                >
-                    <Text style={[styles.reactionText, reacted && styles.reactionTextActive]}>
-                        🐾 {reactions}
-                    </Text>
-                </TouchableOpacity>
             </View>
+
+            {/* リアクションバー */}
+            <ReactionBar
+                reactions={reactions}
+                activeKeys={activeKeys}
+                onReact={handleReact}
+            />
         </View>
     );
 }
@@ -53,7 +65,6 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.08,
         shadowRadius: 8,
-        // Web向けdrop shadow
         elevation: 2,
     },
     image: {
@@ -61,37 +72,14 @@ const styles = StyleSheet.create({
         height: 220,
         backgroundColor: '#f0f0f0',
     },
-    body: {
-        padding: 14,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+    commentRow: {
+        paddingHorizontal: 14,
+        paddingTop: 12,
+        paddingBottom: 8,
     },
     comment: {
-        flex: 1,
         fontSize: 14,
         color: '#333',
-        marginRight: 12,
         lineHeight: 20,
-    },
-    reactionBtn: {
-        paddingVertical: 6,
-        paddingHorizontal: 14,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        backgroundColor: '#fafafa',
-    },
-    reactionBtnActive: {
-        borderColor: '#f97316',
-        backgroundColor: '#fff7ed',
-    },
-    reactionText: {
-        fontSize: 14,
-        color: '#888',
-    },
-    reactionTextActive: {
-        color: '#f97316',
-        fontWeight: 'bold',
     },
 });
