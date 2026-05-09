@@ -12,7 +12,6 @@ const DEFAULT_REACTIONS: Reactions = {
     fluffy: 0,
 }
 
-// toCat関数を修正（APIのreactionsをそのまま使う）
 const toCat = (p: {
     id: string
     image_url: string
@@ -34,8 +33,9 @@ const toCat = (p: {
 
 type FetchState =
     | { status: 'idle' }
-    | { status: 'loading' }       // 初回ローディング
-    | { status: 'loadingMore' }   // 追加取得中
+    | { status: 'loading' }
+    | { status: 'loadingMore' }
+    | { status: 'refreshing' }
     | { status: 'error'; message: string }
     | { status: 'success' }
 
@@ -44,9 +44,8 @@ export const usePosts = () => {
     const [fetchState, setFetchState] = useState<FetchState>({ status: 'idle' })
     const [hasMore, setHasMore] = useState(true)
 
-    // offsetをrefで管理（stateにすると再レンダリングで二重リクエスト発生）
     const offsetRef = useRef(0)
-    const isFetchingRef = useRef(false)  // 二重リクエスト防止フラグ
+    const isFetchingRef = useRef(false)
 
     // 初回取得
     const fetchPosts = useCallback(async () => {
@@ -58,7 +57,7 @@ export const usePosts = () => {
             const data = await getPosts(0, LIMIT)
             setCats(data.map(toCat))
             offsetRef.current = data.length
-            setHasMore(data.length === LIMIT)  // LIMIT未満 → 残なし
+            setHasMore(data.length === LIMIT)
             setFetchState({ status: 'success' })
         } catch (e) {
             const message = e instanceof Error ? e.message : '取得に失敗しました'
@@ -68,10 +67,31 @@ export const usePosts = () => {
         }
     }, [])
 
-    // 追加取得（スクロール末尾で呼ばれる）
+    // 投稿後の再取得（stateを上書きしてoffsetをリセット）
+    const refreshPosts = useCallback(async () => {
+        if (isFetchingRef.current) return
+        isFetchingRef.current = true
+        setFetchState({ status: 'refreshing' })
+
+        try {
+            const data = await getPosts(0, LIMIT)
+            setCats(data.map(toCat))       // 上書き（追記ではない）
+            offsetRef.current = data.length
+            setHasMore(data.length === LIMIT)
+            setFetchState({ status: 'success' })
+        } catch (e) {
+            // 失敗してもフィードは維持（既存データを消さない）
+            setFetchState({ status: 'success' })
+            console.warn('refresh failed:', e)
+        } finally {
+            isFetchingRef.current = false
+        }
+    }, [])
+
+    // 追加取得
     const fetchMore = useCallback(async () => {
-        if (isFetchingRef.current) return  // 二重リクエスト防止
-        if (!hasMore) return               // 残データなし
+        if (isFetchingRef.current) return
+        if (!hasMore) return
 
         isFetchingRef.current = true
         setFetchState({ status: 'loadingMore' })
@@ -90,10 +110,9 @@ export const usePosts = () => {
         }
     }, [hasMore])
 
-    // 新規投稿をフィード先頭に追加
     const addPost = useCallback((cat: Cat) => {
         setCats((prev) => [cat, ...prev])
-        offsetRef.current += 1  // offsetもズラす
+        offsetRef.current += 1
     }, [])
 
     useEffect(() => {
@@ -106,6 +125,7 @@ export const usePosts = () => {
         hasMore,
         fetchPosts,
         fetchMore,
+        refreshPosts,
         addPost,
     }
 }
