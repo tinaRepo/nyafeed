@@ -1,5 +1,5 @@
 # Phase1-STEP2
-- 起動確認
+## 起動確認
 ```bash
 # Web専用で起動
 npx expo start --web
@@ -8,7 +8,7 @@ npx expo start --web
 npm run web
 ```
 
-- 動作確認
+## 動作確認
 
 | 確認項目   | 期待動作                  |
 | ------ | --------------------- |
