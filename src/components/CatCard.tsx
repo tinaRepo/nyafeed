@@ -1,20 +1,16 @@
 import { useState } from 'react';
-import {
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Cat, ReactionKey, Reactions } from '../types/cat';
 import ReactionBar from './ReactionBar';
 import CatImageDetail from './CatImageDetail';
+import { ReactionMasterItem } from '../lib/api';
 
 type Props = {
     cat: Cat;
+    reactionMaster: ReactionMasterItem[];
 };
 
-export default function CatCard({ cat }: Props) {
+export default function CatCard({ cat, reactionMaster }: Props) {
     const [reactions, setReactions] = useState<Reactions>({ ...cat.reactions });
     const [activeKeys, setActiveKeys] = useState<Set<ReactionKey>>(new Set());
     const [detailVisible, setDetailVisible] = useState(false);
@@ -39,13 +35,8 @@ export default function CatCard({ cat }: Props) {
 
     return (
         <View style={styles.card}>
-            {/* 画像タップで詳細表示 */}
-            <TouchableOpacity
-                onPress={() => setDetailVisible(true)}
-                activeOpacity={0.95}
-            >
+            <TouchableOpacity onPress={() => setDetailVisible(true)} activeOpacity={0.95}>
                 {imgError ? (
-                    // 画像ロード失敗時のfallback
                     <View style={styles.imageFallback}>
                         <Text style={styles.imageFallbackIcon}>🐱</Text>
                         <Text style={styles.imageFallbackText}>画像を表示できません</Text>
@@ -54,26 +45,24 @@ export default function CatCard({ cat }: Props) {
                     <Image
                         source={{ uri: cat.imageUrl }}
                         style={styles.image}
-                        resizeMode="cover"         // 正方形トリミング
+                        resizeMode="cover"
                         onError={() => setImgError(true)}
                     />
                 )}
             </TouchableOpacity>
 
-            {/* コメント */}
             <View style={styles.commentRow}>
                 <Text style={styles.comment}>{cat.comment}</Text>
             </View>
 
-            {/* リアクション */}
             <ReactionBar
                 postId={cat.id}
                 reactions={reactions}
                 activeKeys={activeKeys}
+                reactionMaster={reactionMaster}
                 onReact={handleReact}
             />
 
-            {/* 詳細モーダル */}
             <CatImageDetail
                 uri={cat.imageUrl}
                 visible={detailVisible}
@@ -98,7 +87,7 @@ const styles = StyleSheet.create({
     },
     image: {
         width: '100%',
-        aspectRatio: 1,        // ← 正方形（1:1）に統一
+        aspectRatio: 1,
         backgroundColor: '#f0f0f0',
     },
     imageFallback: {
@@ -108,14 +97,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    imageFallbackIcon: {
-        fontSize: 40,
-        marginBottom: 8,
-    },
-    imageFallbackText: {
-        fontSize: 13,
-        color: '#bbb',
-    },
+    imageFallbackIcon: { fontSize: 40, marginBottom: 8 },
+    imageFallbackText: { fontSize: 13, color: '#bbb' },
     commentRow: {
         paddingHorizontal: 14,
         paddingTop: 12,

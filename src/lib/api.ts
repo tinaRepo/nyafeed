@@ -24,6 +24,13 @@ export type AddReactionResponse = {
     reactions: Record<ReactionKey, number>
 }
 
+export type ReactionMasterItem = {
+    id: string
+    name: string
+    emoji: string
+    label: string
+}
+
 // GET /posts
 export const getPosts = async (
     offset = 0,
@@ -68,5 +75,12 @@ export const addReaction = async (
         const error = await res.json().catch(() => ({}))
         throw new Error(error.error ?? `API error: ${res.status}`)
     }
+    return res.json()
+}
+
+// GET /reactions/master
+export const getReactionMaster = async (): Promise<ReactionMasterItem[]> => {
+    const res = await fetch(`${API_BASE_URL}/reactions/master`)
+    if (!res.ok) throw new Error(`Failed to fetch reaction master: ${res.status}`)
     return res.json()
 }

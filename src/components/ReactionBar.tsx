@@ -1,20 +1,14 @@
 import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ReactionKey, Reactions } from '../types/cat';
+import { ReactionMasterItem } from '../lib/api';
 import { addReaction } from '../lib/api';
-
-const REACTION_CONFIG: { key: ReactionKey; emoji: string; label: string }[] = [
-    { key: 'cute', emoji: '😍', label: 'かわいい！' },
-    { key: 'sniff', emoji: '😤', label: '吸いたい' },
-    { key: 'healing', emoji: '🌿', label: '癒される〜' },
-    { key: 'pressure', emoji: '😤', label: '圧がすごい' },
-    { key: 'fluffy', emoji: '🐾', label: 'もふもふ' },
-];
 
 type Props = {
     postId: string;
     reactions: Reactions;
     activeKeys: Set<ReactionKey>;
+    reactionMaster: ReactionMasterItem[];
     onReact: (key: ReactionKey, updatedReactions?: Reactions) => void;
 };
 
@@ -22,22 +16,19 @@ export default function ReactionBar({
     postId,
     reactions,
     activeKeys,
+    reactionMaster,
     onReact,
 }: Props) {
     const [sendingKeys, setSendingKeys] = useState<Set<ReactionKey>>(new Set())
 
     const handlePress = async (key: ReactionKey) => {
         if (sendingKeys.has(key)) return
-
-        // 現在の状態でadd/removeを決定
-        const action = activeKeys.has(key) ? 'remove' : 'add'  // ← 追加
-
-        // 楽観更新
+        const action = activeKeys.has(key) ? 'remove' : 'add'
         onReact(key)
 
         setSendingKeys((prev) => new Set(prev).add(key))
         try {
-            const result = await addReaction(postId, key, action)  // ← action追加
+            const result = await addReaction(postId, key, action)
             onReact(key, result.reactions as Reactions)
         } catch (e) {
             onReact(key)
@@ -51,15 +42,19 @@ export default function ReactionBar({
         }
     }
 
+    // マスターが未取得の場合は表示しない
+    if (reactionMaster.length === 0) return null
+
     return (
         <View style={styles.container}>
-            {REACTION_CONFIG.map(({ key, emoji, label }) => {
+            {reactionMaster.map(({ name, emoji, label }) => {
+                const key = name as ReactionKey
                 const isActive = activeKeys.has(key)
                 const isSending = sendingKeys.has(key)
 
                 return (
                     <TouchableOpacity
-                        key={key}
+                        key={name}
                         style={[
                             styles.btn,
                             isActive && styles.btnActive,
@@ -74,7 +69,7 @@ export default function ReactionBar({
                             {label}
                         </Text>
                         <Text style={[styles.count, isActive && styles.countActive]}>
-                            {reactions[key]}
+                            {reactions[key] ?? 0}
                         </Text>
                     </TouchableOpacity>
                 )

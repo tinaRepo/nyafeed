@@ -21,6 +21,7 @@ import Toast from './src/components/Toast';
 import EmptyFeed from './src/components/EmptyFeed';
 import { usePosts } from './src/hooks/usePosts';
 import { Cat } from './src/types/cat';
+import { useReactionMaster } from './src/hooks/useReactionMaster';
 
 const LOAD_MORE_THRESHOLD = 300
 
@@ -35,6 +36,7 @@ export default function App() {
     fetchMore,
     refreshPosts,
   } = usePosts()
+  const { reactionMaster } = useReactionMaster()
 
   const scrollViewRef = useRef<ScrollView>(null)
   const isRefreshing = fetchState.status === 'refreshing'
@@ -121,7 +123,11 @@ export default function App() {
         }
       >
         {cats.map((cat) => (
-          <CatCard key={cat.id} cat={cat} />
+          <CatCard
+            key={cat.id}
+            cat={cat}
+            reactionMaster={reactionMaster}
+          />
         ))}
         {renderFooter()}
       </ScrollView>
