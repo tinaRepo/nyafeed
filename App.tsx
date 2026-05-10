@@ -18,6 +18,7 @@ import Header from './src/components/Header';
 import CatCard from './src/components/CatCard';
 import PostModal from './src/components/PostModal';
 import Toast from './src/components/Toast';
+import EmptyFeed from './src/components/EmptyFeed';
 import { usePosts } from './src/hooks/usePosts';
 import { Cat } from './src/types/cat';
 
@@ -100,11 +101,7 @@ export default function App() {
     }
     if (fetchState.status === 'success' && cats.length === 0) {
       return (
-        <View style={styles.centered}>
-          <Text style={styles.emptyIcon}>🐱</Text>
-          <Text style={styles.emptyText}>まだ投稿がありません</Text>
-          <Text style={styles.emptySubText}>最初の猫を投稿してみよう！</Text>
-        </View>
+        <EmptyFeed onPost={() => setModalVisible(true)} />
       )
     }
     return (
