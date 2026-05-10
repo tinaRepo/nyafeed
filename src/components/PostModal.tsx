@@ -1,3 +1,6 @@
+// handleSubmit 内のアップロード前に最適化処理を追加
+
+import { optimizeImage } from '../lib/imageOptimizer';
 import { useState } from 'react';
 import {
     ActivityIndicator,
@@ -65,26 +68,27 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
         }
 
         try {
-            // STEP1: 画像アップロード（R2）
             let imageUrl: string
 
             if (pickedImage) {
                 setUploadState({ status: 'uploading_image' })
-                imageUrl = await uploadImage(pickedImage.uri, pickedImage.mimeType)
+
+                // 最適化（リサイズ + WebP変換）してからアップロード
+                const optimized = await optimizeImage(pickedImage.uri, pickedImage.mimeType)
+                imageUrl = await uploadImage(optimized.uri, optimized.mimeType)
+
             } else {
                 imageUrl = DUMMY_IMAGE_POOL[
                     Math.floor(Math.random() * DUMMY_IMAGE_POOL.length)
                 ] as string
             }
 
-            // STEP2: API送信（DB保存）
             setUploadState({ status: 'saving_post' })
             const created = await createPost({
                 image_url: imageUrl,
                 comment: comment.trim(),
             })
 
-            // STEP3: フィードに反映
             const newCat: Cat = {
                 id: created.id,
                 imageUrl: created.image_url,

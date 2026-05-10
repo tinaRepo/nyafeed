@@ -1,3 +1,7 @@
+// import 'react-native-reanimated'; // EAS Build移行時に有効化
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+// NOTE: EAS Build移行時にコメントを外す
+// import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import {
   ActivityIndicator,
   NativeScrollEvent,
@@ -9,7 +13,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useRef, useState } from 'react';
 import Header from './src/components/Header';
 import CatCard from './src/components/CatCard';
@@ -33,19 +36,15 @@ export default function App() {
   } = usePosts()
 
   const scrollViewRef = useRef<ScrollView>(null)
-
   const isRefreshing = fetchState.status === 'refreshing'
 
-  // 更新ボタン + Pull To Refresh 共通処理
   const handleRefresh = async () => {
     await refreshPosts()
-    // SP: RefreshControlの収納完了を待ってからスクロール
     setTimeout(() => {
       scrollViewRef.current?.scrollTo({ y: 0, animated: false })
     }, 100)
   }
 
-  // 投稿成功後
   const handleSubmit = async (newCat: Cat) => {
     setModalVisible(false)
     await refreshPosts()
@@ -115,13 +114,12 @@ export default function App() {
         contentContainerStyle={styles.feedContent}
         onScroll={handleScroll}
         scrollEventThrottle={200}
-        // Pull To Refresh
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={handleRefresh}
-            tintColor="#f97316"      // iOS: インジケーターの色
-            colors={['#f97316']}     // Android: インジケーターの色
+            tintColor="#f97316"
+            colors={['#f97316']}
           />
         }
       >
@@ -134,6 +132,8 @@ export default function App() {
   }
 
   return (
+    // NOTE: EAS Build移行時は GestureHandlerRootView でラップする
+    // <GestureHandlerRootView style={{ flex: 1 }}>
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <View style={styles.container}>
@@ -157,6 +157,8 @@ export default function App() {
         </View>
       </SafeAreaView>
     </SafeAreaProvider>
+    // NOTE: EAS Build移行時は閉じタグも戻す
+    // </GestureHandlerRootView>
   );
 }
 
