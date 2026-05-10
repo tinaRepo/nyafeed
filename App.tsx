@@ -2,6 +2,7 @@ import {
   ActivityIndicator,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -22,9 +23,29 @@ const LOAD_MORE_THRESHOLD = 300
 export default function App() {
   const [modalVisible, setModalVisible] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
-  const { cats, fetchState, hasMore, fetchPosts, fetchMore, refreshPosts } = usePosts()
+  const {
+    cats,
+    fetchState,
+    hasMore,
+    fetchPosts,
+    fetchMore,
+    refreshPosts,
+  } = usePosts()
+
   const scrollViewRef = useRef<ScrollView>(null)
 
+  const isRefreshing = fetchState.status === 'refreshing'
+
+  // 更新ボタン + Pull To Refresh 共通処理
+  const handleRefresh = async () => {
+    await refreshPosts()
+    // SP: RefreshControlの収納完了を待ってからスクロール
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: false })
+    }, 100)
+  }
+
+  // 投稿成功後
   const handleSubmit = async (newCat: Cat) => {
     setModalVisible(false)
     await refreshPosts()
@@ -94,13 +115,16 @@ export default function App() {
         contentContainerStyle={styles.feedContent}
         onScroll={handleScroll}
         scrollEventThrottle={200}
+        // Pull To Refresh
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor="#f97316"      // iOS: インジケーターの色
+            colors={['#f97316']}     // Android: インジケーターの色
+          />
+        }
       >
-        {fetchState.status === 'refreshing' && (
-          <View style={styles.refreshingBar}>
-            <ActivityIndicator size="small" color="#f97316" />
-            <Text style={styles.refreshingText}>更新中…</Text>
-          </View>
-        )}
         {cats.map((cat) => (
           <CatCard key={cat.id} cat={cat} />
         ))}
@@ -113,14 +137,17 @@ export default function App() {
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <View style={styles.container}>
-          <Header onPost={() => setModalVisible(true)} />
+          <Header
+            onPost={() => setModalVisible(true)}
+            onRefresh={handleRefresh}
+            isRefreshing={isRefreshing}
+          />
           {renderContent()}
           <PostModal
             visible={modalVisible}
             onClose={() => setModalVisible(false)}
             onSubmit={handleSubmit}
           />
-          {/* Toast：SafeAreaView内の最前面に配置 */}
           <Toast
             message="投稿しました 🐾"
             visible={toastVisible}
@@ -149,6 +176,4 @@ const styles = StyleSheet.create({
   emptySubText: { fontSize: 13, color: '#aaa' },
   footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 20 },
   footerText: { fontSize: 13, color: '#aaa' },
-  refreshingBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10, backgroundColor: '#fff7ed', borderRadius: 8, marginHorizontal: 16, marginBottom: 8 },
-  refreshingText: { fontSize: 13, color: '#f97316' },
 });
