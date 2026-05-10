@@ -32,7 +32,7 @@ Reanimated 3.x → Expo SDK 54 との組み合わせで初期化エラー
 ### 1. パッケージインストール
 
 ```bash
-cd catroom
+cd nyafeed
 npx expo install react-native-reanimated react-native-gesture-handler
 ```
 

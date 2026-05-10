@@ -18,7 +18,7 @@ api/
     │   └── reactions.ts        ← 新規作成（add/remove対応）
     └── index.ts                ← 変更（ルート登録）
 
-catroom/
+nyafeed/
 └── src/
     ├── lib/
     │   └── api.ts              ← 変更（addReaction追加・PostResponseにreactions追加）

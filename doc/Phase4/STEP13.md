@@ -13,7 +13,7 @@ api/
     └── routes/
         └── posts.ts      ← 変更（GET /posts 追加）
 
-catroom/
+nyafeed/
 ├── src/
 │   ├── lib/
 │   │   └── api.ts        ← 変更（getPosts 追加）

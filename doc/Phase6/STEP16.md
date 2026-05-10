@@ -8,7 +8,7 @@ Toast通知で投稿完了をユーザーに伝える。
 ## ディレクトリ構成（差分）
 
 ```
-catroom/
+nyafeed/
 ├── src/
 │   ├── hooks/
 │   │   └── usePosts.ts       ← 変更（refreshPosts追加）

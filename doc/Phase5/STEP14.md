@@ -13,7 +13,7 @@ api/
     └── routes/
         └── posts.ts      ← 変更（offset/limit対応）
 
-catroom/
+nyafeed/
 ├── src/
 │   ├── lib/
 │   │   └── api.ts        ← 変更（offset/limitパラメータ追加）
@@ -158,7 +158,7 @@ git add .
 git commit -m "feat: add offset/limit pagination to GET /posts"
 
 # フロント
-cd catroom
+cd nyafeed
 git add .
 git commit -m "feat: implement infinite scroll with offset pagination"
 ```

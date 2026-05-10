@@ -19,7 +19,7 @@ Cloudflare R2
 ```
 1. https://dash.cloudflare.com にアクセス
 2. 左メニュー → R2 Object Storage
-3. 「Create bucket」でバケット作成（例: catroom-images）
+3. 「Create bucket」でバケット作成（例: nyafeed-images）
 4. バケット → Settings → Public access → 「Allow Access」を有効化
 5. 表示される Public Bucket URL をメモ
    例: https://pub-xxxxxxxx.r2.dev
@@ -80,7 +80,7 @@ DATABASE_URL=postgresql://...
 R2_ACCOUNT_ID=your_account_id
 R2_ACCESS_KEY_ID=your_access_key_id
 R2_SECRET_ACCESS_KEY=your_secret_access_key
-R2_BUCKET_NAME=catroom-images
+R2_BUCKET_NAME=nyafeed-images
 R2_PUBLIC_URL=https://pub-xxxxxxxx.r2.dev
 ```
 

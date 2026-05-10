@@ -8,7 +8,7 @@
 ## ディレクトリ構成（差分）
 
 ```
-catroom/
+nyafeed/
 ├── app.json                   ← 変更（PWA・SEO・OGP設定）
 ├── assets/
 │   ├── favicon.png            ← 差し替え（猫アイコン）
@@ -41,7 +41,7 @@ App.tsx                        ← 変更（EmptyFeed に差し替え）
 ### 配置先
 
 ```
-catroom/assets/ に配置（名前そのままでOK）
+nyafeed/assets/ に配置（名前そのままでOK）
 ├── favicon.png          ← favicon.png をそのまま配置
 ├── icon.png             ← icon.png をそのまま配置
 ├── adaptive-icon.png    ← adaptive-icon.png をそのまま配置

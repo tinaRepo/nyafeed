@@ -8,7 +8,7 @@
 ## ディレクトリ構成（差分）
 
 ```
-catroom/
+nyafeed/
 └── src/
     ├── components/
     │   ├── CatCard.tsx        ← 変更（正方形表示・詳細モーダル追加・fallback追加）
