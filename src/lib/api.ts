@@ -1,7 +1,4 @@
-// SPからのアクセスはIPアドレスに変更すること
-// PC確認時   → 'http://localhost:3000'
-// Expo Go時  → 'http://192.168.x.x:3000'
-export const API_BASE_URL = 'http://localhost:3000'
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000'
 
 export type ReactionKey = 'cute' | 'sniff' | 'healing' | 'pressure' | 'fluffy'
 
