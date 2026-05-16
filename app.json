@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "NyaFeed",
+    "slug": "nyafeed",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "name": "NyaFeed",
+      "shortName": "NyaFeed",
+      "description": "かわいい猫だけが流れる匿名掲示板",
+      "themeColor": "#f97316",
+      "backgroundColor": "#ffffff",
+      "display": "standalone",
+      "lang": "ja",
+      "meta": {
+        "viewport": "width=device-width, initial-scale=1, shrink-to-fit=no",
+        "og:title": "NyaFeed｜猫だけ匿名掲示板",
+        "og:description": "かわいい猫だけが流れる匿名掲示板",
+        "og:type": "website",
+        "og:image": "./assets/icon.png",
+        "twitter:card": "summary_large_image",
+        "twitter:title": "NyaFeed｜猫だけ匿名掲示板",
+        "twitter:description": "かわいい猫だけが流れる匿名掲示板",
+        "theme-color": "#f97316",
+        "description": "かわいい猫だけが流れる匿名掲示板"
+      }
+    },
+    "platforms": [
+      "web",
+      "ios",
+      "android"
+    ]
+  }
+}
