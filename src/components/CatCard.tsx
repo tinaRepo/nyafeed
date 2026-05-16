@@ -79,11 +79,8 @@ const styles = StyleSheet.create({
         marginHorizontal: 16,
         marginVertical: 8,
         overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 2,
+        boxShadow: '0px 2px 8px rgba(0,0,0,0.08)',  // Web
+        elevation: 2,                                 // Android
     },
     image: {
         width: '100%',

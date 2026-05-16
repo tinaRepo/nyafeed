@@ -219,7 +219,7 @@ export default function ImagePickerComponent({ value, onChange }: Props) {
             ) : null}
 
             <Text style={styles.skipNote}>
-                ※ 省略すると投稿時にダミー画像が使われます
+                ※ 10分間に5回まで投稿可能です
             </Text>
         </View>
     );

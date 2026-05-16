@@ -5,12 +5,18 @@ export const API_BASE_URL = 'http://localhost:3000'
 
 export type ReactionKey = 'cute' | 'sniff' | 'healing' | 'pressure' | 'fluffy'
 
+export type VisionLabel = {
+    description: string
+    score: number
+}
+
 export type PostResponse = {
     id: string
     image_url: string
     comment: string
     created_at: string
     reactions: Record<ReactionKey, number>
+    labels?: VisionLabel[]
 }
 
 export type CreatePostRequest = {
@@ -69,7 +75,7 @@ export const addReaction = async (
     const res = await fetch(`${API_BASE_URL}/posts/${postId}/reactions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reaction_type: reactionType, action }),  // ← 追加
+        body: JSON.stringify({ reaction_type: reactionType, action }),
     })
     if (!res.ok) {
         const error = await res.json().catch(() => ({}))

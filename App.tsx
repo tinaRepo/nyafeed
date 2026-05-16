@@ -28,6 +28,7 @@ const LOAD_MORE_THRESHOLD = 300
 export default function App() {
   const [modalVisible, setModalVisible] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('投稿しました 🐾')
   const {
     cats,
     fetchState,
@@ -48,10 +49,11 @@ export default function App() {
     }, 100)
   }
 
-  const handleSubmit = async (newCat: Cat) => {
+  const handleSubmit = async (newCat: Cat, toastMsg: string) => {
     setModalVisible(false)
     await refreshPosts()
     scrollViewRef.current?.scrollTo({ y: 0, animated: true })
+    setToastMessage(toastMsg)
     setToastVisible(true)
   }
 
@@ -152,7 +154,7 @@ export default function App() {
             onSubmit={handleSubmit}
           />
           <Toast
-            message="投稿しました 🐾"
+            message={toastMessage}
             visible={toastVisible}
             onHide={() => setToastVisible(false)}
             duration={5000}

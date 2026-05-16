@@ -65,11 +65,8 @@ const styles = StyleSheet.create({
         borderColor: '#f97316',
         paddingVertical: 4,
         paddingHorizontal: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
-        elevation: 2,
+        boxShadow: '0px 2px 8px rgba(0,0,0,0.08)',  // Web
+        elevation: 2,                                 // Android
     },
     speechText: {
         fontSize: 13,
@@ -95,12 +92,8 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         paddingHorizontal: 28,
         borderRadius: 28,
-        shadowColor: '#f97316',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
-        marginBottom: 12,
+        boxShadow: '0px 2px 8px rgba(0,0,0,0.08)',  // Web
+        elevation: 2,                                 // Android
     },
     postBtnText: {
         color: '#fff',

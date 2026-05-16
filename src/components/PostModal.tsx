@@ -1,6 +1,7 @@
 // handleSubmit 内のアップロード前に最適化処理を追加
 
 import { optimizeImage } from '../lib/imageOptimizer';
+import { getToastMessage } from '../lib/toastMessage'
 import { useState } from 'react';
 import {
     ActivityIndicator,
@@ -38,13 +39,14 @@ const DEFAULT_REACTIONS: Reactions = {
 type UploadState =
     | { status: 'idle' }
     | { status: 'uploading_image' }   // R2アップロード中
+    | { status: 'checking_image' }    // VISION API画像確認中
     | { status: 'saving_post' }       // API保存中
     | { status: 'error'; message: string }
 
 type Props = {
     visible: boolean;
     onClose: () => void;
-    onSubmit: (cat: Cat) => void;
+    onSubmit: (cat: Cat, toastMsg: string) => void;
 };
 
 export default function PostModal({ visible, onClose, onSubmit }: Props) {
@@ -53,13 +55,16 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
     const [commentError, setCommentError] = useState('');
     const [uploadState, setUploadState] = useState<UploadState>({ status: 'idle' });
 
-    const isLoading = uploadState.status === 'uploading_image'
-        || uploadState.status === 'saving_post'
+    const isLoading = uploadState.status !== 'idle'
+        && uploadState.status !== 'error'
 
     // ローディングメッセージをステップに応じて切り替え
-    const loadingMessage = uploadState.status === 'uploading_image'
-        ? '画像をアップロード中…'
-        : '投稿を保存中…'
+    const loadingMessage =
+        uploadState.status === 'uploading_image'
+            ? '画像をアップロード中…'
+            : uploadState.status === 'checking_image'
+                ? '画像を確認中…'
+                : '投稿を保存中…'
 
     const handleSubmit = async () => {
         if (!comment.trim()) {
@@ -83,12 +88,13 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
                 ] as string
             }
 
-            setUploadState({ status: 'saving_post' })
+            setUploadState({ status: 'checking_image' })
             const created = await createPost({
                 image_url: imageUrl,
                 comment: comment.trim(),
             })
 
+            setUploadState({ status: 'saving_post' })
             const newCat: Cat = {
                 id: created.id,
                 imageUrl: created.image_url,
@@ -96,7 +102,9 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
                 reactions: { ...DEFAULT_REACTIONS },
             }
 
-            onSubmit(newCat)
+            const toastMsg = getToastMessage(created.labels ?? [])
+
+            onSubmit(newCat, toastMsg)
             handleClose()
 
         } catch (e) {

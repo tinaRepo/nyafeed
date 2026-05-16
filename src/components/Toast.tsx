@@ -166,11 +166,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#1a1a1a',
         borderRadius: 14,
         overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 12,
-        elevation: 8,
+        boxShadow: '0px 2px 8px rgba(0,0,0,0.08)',  // Web
+        elevation: 2,                                 // Android
         zIndex: 999,
     },
     inner: {
