@@ -12,6 +12,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Platform,
 } from 'react-native';
 import { useCallback, useRef, useState } from 'react';
 import Header from './src/components/Header';
@@ -203,32 +204,35 @@ export default function App() {
     // <GestureHandlerRootView style={{ flex: 1 }}>
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-        <View style={styles.container}>
-          <Header
-            onPost={() => setModalVisible(true)}
-            onRefresh={handleRefresh}
-            isRefreshing={isRefreshing}
-          />
-          {renderContent()}
-          {/* フッター（フィード末尾に表示） */}
-          <Footer
-            onTerms={() => setScreen('terms')}
-            onPrivacy={() => setScreen('privacy')}
-            onAdmin={() => setScreen('admin')}
-            onContact={() => setScreen('contact')}
-          />
-          <PostModal
-            visible={modalVisible}
-            onClose={() => setModalVisible(false)}
-            onSubmit={handleSubmit}
-          />
-          <Toast
-            message={toastMessage}
-            visible={toastVisible}
-            onHide={() => setToastVisible(false)}
-            duration={toastType === 'error' ? 4000 : 5000}
-            type={toastType}
-          />
+        {/* Web: 中央寄せコンテナ */}
+        <View style={styles.webWrapper}>
+          <View style={styles.container}>
+            <Header
+              onPost={() => setModalVisible(true)}
+              onRefresh={handleRefresh}
+              isRefreshing={isRefreshing}
+            />
+            {renderContent()}
+            {/* フッター（フィード末尾に表示） */}
+            <Footer
+              onTerms={() => setScreen('terms')}
+              onPrivacy={() => setScreen('privacy')}
+              onAdmin={() => setScreen('admin')}
+              onContact={() => setScreen('contact')}
+            />
+            <PostModal
+              visible={modalVisible}
+              onClose={() => setModalVisible(false)}
+              onSubmit={handleSubmit}
+            />
+            <Toast
+              message={toastMessage}
+              visible={toastVisible}
+              onHide={() => setToastVisible(false)}
+              duration={toastType === 'error' ? 4000 : 5000}
+              type={toastType}
+            />
+          </View>
         </View>
       </SafeAreaView>
     </SafeAreaProvider>
@@ -238,19 +242,86 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#fff' },
-  container: { flex: 1, backgroundColor: '#f7f7f7' },
-  feed: { flex: 1 },
-  feedContent: { paddingVertical: 12 },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  loadingText: { marginTop: 12, fontSize: 14, color: '#888' },
-  errorIcon: { fontSize: 48, marginBottom: 12 },
-  errorText: { fontSize: 14, color: '#ef4444', marginBottom: 16, textAlign: 'center' },
-  retryBtn: { backgroundColor: '#f97316', paddingVertical: 10, paddingHorizontal: 24, borderRadius: 20 },
-  retryBtnText: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
-  emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyText: { fontSize: 16, fontWeight: 'bold', color: '#555', marginBottom: 6 },
-  emptySubText: { fontSize: 13, color: '#aaa' },
-  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 20 },
-  footerText: { fontSize: 13, color: '#aaa' },
+  safeArea: {
+    flex: 1,
+    backgroundColor: Platform.OS === 'web' ? '#e5e5e5' : '#fff',
+  },
+  webWrapper: {
+    flex: 1,
+    alignItems: Platform.OS === 'web' ? 'center' : 'stretch',
+    backgroundColor: Platform.OS === 'web' ? '#e5e5e5' : 'transparent',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#f7f7f7',
+    width: '100%',
+    // Web: 最大幅を設定して中央寄せ
+    ...(Platform.OS === 'web' ? {
+      maxWidth: 480,
+      boxShadow: '0 0 20px rgba(0,0,0,0.1)',
+    } : {}),
+  },
+  feed: {
+    flex: 1,
+  },
+  feedContent: {
+    paddingVertical: 12,
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#888',
+  },
+  errorIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#ef4444',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  retryBtn: {
+    backgroundColor: '#f97316',
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+  },
+  retryBtnText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#555',
+    marginBottom: 6,
+  },
+  emptySubText: {
+    fontSize: 13,
+    color: '#aaa',
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 20,
+  },
+  footerText: {
+    fontSize: 13,
+    color: '#aaa',
+  },
 });
