@@ -8,7 +8,7 @@ Pull To Refresh（引っ張って更新）とヘッダーの更新ボタンの2�
 ## ディレクトリ構成（差分）
 
 ```
-my-app/
+nyafeed/
 ├── src/
 │   └── components/
 │       └── Header.tsx   ← 変更（更新ボタン追加）

@@ -65,7 +65,7 @@ PCで動いているAPIサーバーに届かない。
 
 ### 解決方法
 
-`my-app/src/lib/api.ts` の `API_BASE_URL` を
+`nyafeed/src/lib/api.ts` の `API_BASE_URL` を
 PCのIPアドレスに変更する。
 
 ```ts

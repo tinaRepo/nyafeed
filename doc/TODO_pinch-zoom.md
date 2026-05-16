@@ -117,7 +117,7 @@ eas build --profile development --platform android
 ## 関連ファイル
 
 ```
-my-app/
+nyafeed/
 ├── babel.config.js              ← plugins をコメントアウト中
 ├── App.tsx                      ← GestureHandlerRootView をコメントアウト中
 └── src/
