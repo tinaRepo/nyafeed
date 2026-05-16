@@ -71,6 +71,26 @@ export const REPORT_REASONS = [
     { value: 'other', label: 'その他' },
 ] as const
 
+// fetch 共通エラーハンドリング
+const handleApiError = async (res: Response): Promise<never> => {
+    const data = await res.json().catch(() => ({}))
+
+    // ステータスコードに応じたメッセージ
+    if (res.status === 429) {
+        throw new Error(data.error ?? 'しばらく時間をおいてから再試行してください')
+    }
+    if (res.status === 400) {
+        throw new Error(data.error ?? '入力内容を確認してください')
+    }
+    if (res.status === 403) {
+        throw new Error('アクセスが拒否されました')
+    }
+    if (res.status === 500) {
+        throw new Error('サーバーエラーが発生しました。しばらくしてから再試行してください')
+    }
+    throw new Error(data.error ?? `エラーが発生しました（${res.status}）`)
+}
+
 export type ReportReasonValue = typeof REPORT_REASONS[number]['value']
 
 // GET /posts
@@ -81,7 +101,7 @@ export const getPosts = async (
     const res = await fetch(
         `${API_BASE_URL}/posts?offset=${offset}&limit=${limit}`
     )
-    if (!res.ok) throw new Error(`Failed to fetch posts: ${res.status}`)
+    if (!res.ok) await handleApiError(res)
     return res.json()
 }
 
@@ -94,10 +114,7 @@ export const createPost = async (
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
     })
-    if (!res.ok) {
-        const error = await res.json().catch(() => ({}))
-        throw new Error(error.error ?? `API error: ${res.status}`)
-    }
+    if (!res.ok) await handleApiError(res)
     return res.json()
 }
 
@@ -112,10 +129,7 @@ export const addReaction = async (
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reaction_type: reactionType, action }),
     })
-    if (!res.ok) {
-        const error = await res.json().catch(() => ({}))
-        throw new Error(error.error ?? `API error: ${res.status}`)
-    }
+    if (!res.ok) await handleApiError(res)
     return res.json()
 }
 

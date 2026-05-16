@@ -39,7 +39,11 @@ type FetchState =
     | { status: 'error'; message: string }
     | { status: 'success' }
 
-export const usePosts = () => {
+type UsePostsOptions = {
+    onError?: (message: string) => void
+}
+
+export const usePosts = ({ onError }: UsePostsOptions = {}) => {
     const [cats, setCats] = useState<Cat[]>([])
     const [fetchState, setFetchState] = useState<FetchState>({ status: 'idle' })
     const [hasMore, setHasMore] = useState(true)
@@ -62,12 +66,13 @@ export const usePosts = () => {
         } catch (e) {
             const message = e instanceof Error ? e.message : '取得に失敗しました'
             setFetchState({ status: 'error', message })
+            onError?.(message)
         } finally {
             isFetchingRef.current = false
         }
-    }, [])
+    }, [onError])
 
-    // 投稿後の再取得（stateを上書きしてoffsetをリセット）
+    // 投稿後の再取得
     const refreshPosts = useCallback(async () => {
         if (isFetchingRef.current) return
         isFetchingRef.current = true
@@ -81,12 +86,13 @@ export const usePosts = () => {
             setFetchState({ status: 'success' })
         } catch (e) {
             // 失敗してもフィードは維持（既存データを消さない）
+            const message = e instanceof Error ? e.message : '更新に失敗しました'
             setFetchState({ status: 'success' })
-            console.warn('refresh failed:', e)
+            onError?.(message)
         } finally {
             isFetchingRef.current = false
         }
-    }, [])
+    }, [onError])
 
     // 追加取得
     const fetchMore = useCallback(async () => {
@@ -105,10 +111,11 @@ export const usePosts = () => {
         } catch (e) {
             const message = e instanceof Error ? e.message : '取得に失敗しました'
             setFetchState({ status: 'error', message })
+            onError?.(message)
         } finally {
             isFetchingRef.current = false
         }
-    }, [hasMore])
+    }, [hasMore, onError])
 
     const addPost = useCallback((cat: Cat) => {
         setCats((prev) => [cat, ...prev])

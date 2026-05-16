@@ -9,9 +9,10 @@ import { ReactionMasterItem } from '../lib/api';
 type Props = {
     cat: Cat;
     reactionMaster: ReactionMasterItem[];
+    onError?: (message: string) => void;
 };
 
-export default function CatCard({ cat, reactionMaster }: Props) {
+export default function CatCard({ cat, reactionMaster, onError }: Props) {
     const [reactions, setReactions] = useState<Reactions>({ ...cat.reactions });
     const [activeKeys, setActiveKeys] = useState<Set<ReactionKey>>(new Set());
     const [detailVisible, setDetailVisible] = useState(false);
@@ -76,6 +77,7 @@ export default function CatCard({ cat, reactionMaster }: Props) {
                 activeKeys={activeKeys}
                 reactionMaster={reactionMaster}
                 onReact={handleReact}
+                onError={onError}
             />
 
             {/* 詳細モーダル */}

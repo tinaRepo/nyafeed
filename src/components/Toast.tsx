@@ -12,6 +12,7 @@ type Props = {
     visible: boolean;
     onHide: () => void;
     duration?: number;  // 自動非表示までの時間（ms）デフォルト5000
+    type?: 'success' | 'error';
 };
 
 export default function Toast({
@@ -19,6 +20,7 @@ export default function Toast({
     visible,
     onHide,
     duration = 5000,
+    type = 'success',
 }: Props) {
     const opacity = useRef(new Animated.Value(0)).current
     const translateY = useRef(new Animated.Value(-20)).current
@@ -114,24 +116,27 @@ export default function Toast({
         <Animated.View
             style={[
                 styles.container,
+                type === 'error' && styles.containerError,
                 { opacity, transform: [{ translateY }] },
             ]}
             {...panResponder.panHandlers}
         >
             <View style={styles.inner}>
-                <Text style={styles.icon}>🐱</Text>
+                <Text style={styles.icon}>
+                    {type === 'error' ? '⚠️' : '🐱'}
+                </Text>
                 <Text style={styles.message}>{message}</Text>
             </View>
             {/* 残り時間インジケーター */}
             <View style={styles.timerBar}>
-                <TimerBar duration={duration} />
+                <TimerBar duration={duration} color={type === 'error' ? '#ef4444' : '#f97316'} />
             </View>
         </Animated.View>
     )
 }
 
 // 残り時間を視覚化するバー
-function TimerBar({ duration }: { duration: number }) {
+function TimerBar({ duration, color = '#f97316' }: { duration: number; color?: string }) {
     const width = useRef(new Animated.Value(100)).current
 
     useEffect(() => {
@@ -151,6 +156,7 @@ function TimerBar({ duration }: { duration: number }) {
                         inputRange: [0, 100],
                         outputRange: ['0%', '100%'],
                     }),
+                    backgroundColor: color,
                 },
             ]}
         />
@@ -193,5 +199,10 @@ const styles = StyleSheet.create({
     timerBarFill: {
         height: 3,
         backgroundColor: '#f97316',
+    },
+    containerError: {
+        backgroundColor: '#1f1f1f',
+        borderLeftWidth: 4,
+        borderLeftColor: '#ef4444',
     },
 })

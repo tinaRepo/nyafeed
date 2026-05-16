@@ -13,7 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import Header from './src/components/Header';
 import CatCard from './src/components/CatCard';
 import PostModal from './src/components/PostModal';
@@ -37,6 +37,13 @@ export default function App() {
   const [modalVisible, setModalVisible] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('投稿しました 🐾')
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  // エラーToastを表示する共通関数
+  const showErrorToast = useCallback((message: string) => {
+    setToastMessage(message)
+    setToastType('error')
+    setToastVisible(true)
+  }, [])
   const {
     cats,
     fetchState,
@@ -44,7 +51,7 @@ export default function App() {
     fetchPosts,
     fetchMore,
     refreshPosts,
-  } = usePosts()
+  } = usePosts({ onError: showErrorToast })
   const { reactionMaster } = useReactionMaster()
 
   const scrollViewRef = useRef<ScrollView>(null)
@@ -62,6 +69,7 @@ export default function App() {
     await refreshPosts()
     scrollViewRef.current?.scrollTo({ y: 0, animated: true })
     setToastMessage(toastMsg)
+    setToastType('success')
     setToastVisible(true)
   }
 
@@ -137,6 +145,7 @@ export default function App() {
             key={cat.id}
             cat={cat}
             reactionMaster={reactionMaster}
+            onError={showErrorToast}
           />
         ))}
         {renderFooter()}
@@ -217,7 +226,8 @@ export default function App() {
             message={toastMessage}
             visible={toastVisible}
             onHide={() => setToastVisible(false)}
-            duration={5000}
+            duration={toastType === 'error' ? 4000 : 5000}
+            type={toastType}
           />
         </View>
       </SafeAreaView>

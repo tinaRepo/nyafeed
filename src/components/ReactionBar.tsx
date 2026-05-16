@@ -11,6 +11,7 @@ type Props = {
     activeKeys: Set<ReactionKey>;
     reactionMaster: ReactionMasterItem[];
     onReact: (key: ReactionKey, updatedReactions?: Reactions) => void;
+    onError?: (message: string) => void;
 };
 
 // levelに応じたラベルカラー
@@ -29,6 +30,7 @@ export default function ReactionBar({
     activeKeys,
     reactionMaster,
     onReact,
+    onError,
 }: Props) {
     const [sendingKeys, setSendingKeys] = useState<Set<ReactionKey>>(new Set())
 
@@ -43,7 +45,8 @@ export default function ReactionBar({
             onReact(key, result.reactions as Reactions)
         } catch (e) {
             onReact(key)
-            console.warn('reaction failed:', e)
+            const message = e instanceof Error ? e.message : 'リアクションに失敗しました'
+            onError?.(message)
         } finally {
             setSendingKeys((prev) => {
                 const next = new Set(prev)
