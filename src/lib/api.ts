@@ -37,6 +37,16 @@ export type ReactionMasterItem = {
     label: string
 }
 
+export const REPORT_REASONS = [
+    { value: 'spam', label: 'スパム' },
+    { value: 'not_cat', label: '猫ではない' },
+    { value: 'offensive', label: '不快な画像' },
+    { value: 'grotesque', label: 'グロテスク' },
+    { value: 'other', label: 'その他' },
+] as const
+
+export type ReportReasonValue = typeof REPORT_REASONS[number]['value']
+
 // GET /posts
 export const getPosts = async (
     offset = 0,
@@ -66,7 +76,6 @@ export const createPost = async (
 }
 
 // POST /posts/:id/reactions（トグル対応）
-// POST /posts/:id/reactions
 export const addReaction = async (
     postId: string,
     reactionType: ReactionKey,
@@ -88,5 +97,22 @@ export const addReaction = async (
 export const getReactionMaster = async (): Promise<ReactionMasterItem[]> => {
     const res = await fetch(`${API_BASE_URL}/reactions/master`)
     if (!res.ok) throw new Error(`Failed to fetch reaction master: ${res.status}`)
+    return res.json()
+}
+
+// POST /posts/:id/report
+export const reportPost = async (
+    postId: string,
+    reason: ReportReasonValue,
+): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_BASE_URL}/posts/${postId}/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+    })
+    if (!res.ok) {
+        const error = await res.json().catch(() => ({}))
+        throw new Error(error.error ?? `API error: ${res.status}`)
+    }
     return res.json()
 }

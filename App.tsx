@@ -22,10 +22,16 @@ import EmptyFeed from './src/components/EmptyFeed';
 import { usePosts } from './src/hooks/usePosts';
 import { Cat } from './src/types/cat';
 import { useReactionMaster } from './src/hooks/useReactionMaster';
+import Footer from './src/components/Footer';
+import TermsScreen from './src/screens/TermsScreen';
+import PrivacyScreen from './src/screens/PrivacyScreen';
 
 const LOAD_MORE_THRESHOLD = 300
 
+type Screen = 'feed' | 'terms' | 'privacy'
+
 export default function App() {
+  const [screen, setScreen] = useState<Screen>('feed')
   const [modalVisible, setModalVisible] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('投稿しました 🐾')
@@ -136,6 +142,29 @@ export default function App() {
     )
   }
 
+  // 利用規約画面
+  if (screen === 'terms') {
+    return (
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+          <TermsScreen onBack={() => setScreen('feed')} />
+        </SafeAreaView>
+      </SafeAreaProvider>
+    )
+  }
+
+  // プライバシーポリシー画面
+  if (screen === 'privacy') {
+    return (
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+          <PrivacyScreen onBack={() => setScreen('feed')} />
+        </SafeAreaView>
+      </SafeAreaProvider>
+    )
+  }
+
+  // フッターを含む通常のフィード画面
   return (
     // NOTE: EAS Build移行時は GestureHandlerRootView でラップする
     // <GestureHandlerRootView style={{ flex: 1 }}>
@@ -148,6 +177,11 @@ export default function App() {
             isRefreshing={isRefreshing}
           />
           {renderContent()}
+          {/* フッター（フィード末尾に表示） */}
+          <Footer
+            onTerms={() => setScreen('terms')}
+            onPrivacy={() => setScreen('privacy')}
+          />
           <PostModal
             visible={modalVisible}
             onClose={() => setModalVisible(false)}
