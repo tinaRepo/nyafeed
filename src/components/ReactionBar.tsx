@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ReactionKey, Reactions } from '../types/cat';
 import { ReactionMasterItem } from '../lib/api';
 import { addReaction } from '../lib/api';
+import { toFuzzyLabel, calcTotalReactions } from '../lib/fuzzyCount';
 
 type Props = {
     postId: string;
@@ -11,6 +12,16 @@ type Props = {
     reactionMaster: ReactionMasterItem[];
     onReact: (key: ReactionKey, updatedReactions?: Reactions) => void;
 };
+
+// levelに応じたラベルカラー
+const LEVEL_COLORS: Record<number, string> = {
+    0: 'transparent',
+    1: '#94a3b8',  // slate（じわじわ）
+    2: '#f97316',  // orange（かなり）
+    3: '#ef4444',  // red（集まっている）
+    4: '#dc2626',  // red-700（危険）
+    5: '#7c3aed',  // violet（神クラス）
+}
 
 export default function ReactionBar({
     postId,
@@ -45,40 +56,59 @@ export default function ReactionBar({
     // マスターが未取得の場合は表示しない
     if (reactionMaster.length === 0) return null
 
-    return (
-        <View style={styles.container}>
-            {reactionMaster.map(({ name, emoji, label }) => {
-                const key = name as ReactionKey
-                const isActive = activeKeys.has(key)
-                const isSending = sendingKeys.has(key)
+    // 合計リアクション数を曖昧ラベルに変換
+    const total = calcTotalReactions(reactions)
+    const fuzzy = toFuzzyLabel(total)
 
-                return (
-                    <TouchableOpacity
-                        key={name}
-                        style={[
-                            styles.btn,
-                            isActive && styles.btnActive,
-                            isSending && styles.btnSending,
-                        ]}
-                        onPress={() => handlePress(key)}
-                        activeOpacity={0.7}
-                        disabled={isSending}
-                    >
-                        <Text style={styles.emoji}>{emoji}</Text>
-                        <Text style={[styles.label, isActive && styles.labelActive]}>
-                            {label}
-                        </Text>
-                        <Text style={[styles.count, isActive && styles.countActive]}>
-                            {reactions[key] ?? 0}
-                        </Text>
-                    </TouchableOpacity>
-                )
-            })}
+    return (
+        <View style={styles.wrapper}>
+            {/* リアクションボタン群 */}
+            <View style={styles.container}>
+                {reactionMaster.map(({ name, emoji, label }) => {
+                    const key = name as ReactionKey
+                    const isActive = activeKeys.has(key)
+                    const isSending = sendingKeys.has(key)
+
+                    return (
+                        <TouchableOpacity
+                            key={name}
+                            style={[
+                                styles.btn,
+                                isActive && styles.btnActive,
+                                isSending && styles.btnSending,
+                            ]}
+                            onPress={() => handlePress(key)}
+                            activeOpacity={0.7}
+                            disabled={isSending}
+                        >
+                            <Text style={styles.emoji}>{emoji}</Text>
+                            <Text style={[styles.label, isActive && styles.labelActive]}>
+                                {label}
+                            </Text>
+                        </TouchableOpacity>
+                    )
+                })}
+            </View>
+
+            {/* 曖昧ラベル表示（合計が1以上の場合のみ） */}
+            {fuzzy.level > 0 && (
+                <View style={styles.fuzzyRow}>
+                    <Text style={[
+                        styles.fuzzyLabel,
+                        { color: LEVEL_COLORS[fuzzy.level] ?? '#888' }
+                    ]}>
+                        🐾 {fuzzy.label}
+                    </Text>
+                </View>
+            )}
         </View>
     );
 }
 
 const styles = StyleSheet.create({
+    wrapper: {
+        paddingBottom: 14,
+    },
     container: {
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -102,6 +132,12 @@ const styles = StyleSheet.create({
     emoji: { fontSize: 13 },
     label: { fontSize: 11, color: '#888' },
     labelActive: { color: '#f97316', fontWeight: 'bold' },
-    count: { fontSize: 12, color: '#aaa', minWidth: 16, textAlign: 'right' },
-    countActive: { color: '#f97316', fontWeight: 'bold' },
+    fuzzyRow: {
+        paddingHorizontal: 14,
+        paddingTop: 2,
+    },
+    fuzzyLabel: {
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
 });
