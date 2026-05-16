@@ -176,10 +176,12 @@ export default function ImagePickerComponent({ value, onChange }: Props) {
     // ─────────────────────────────────────────
     return (
         <View>
+            {/* Web: onPress なし（input の全面タップのみ）*/}
+            {/* SP:  onPress あり（expo-image-picker を呼ぶ）*/}
             <TouchableOpacity
                 style={[styles.dropArea, isHovered && styles.dropAreaHovered]}
-                onPress={handleAreaClick}
-                activeOpacity={0.8}
+                onPress={Platform.OS !== 'web' ? handleAreaClick : undefined}
+                activeOpacity={Platform.OS !== 'web' ? 0.8 : 1}
                 // @ts-ignore: Web専用マウスイベント
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
