@@ -4,9 +4,10 @@ type Props = {
     onTerms: () => void;
     onPrivacy: () => void;
     onAdmin: () => void;
+    onContact: () => void;
 };
 
-export default function Footer({ onTerms, onPrivacy, onAdmin }: Props) {
+export default function Footer({ onTerms, onPrivacy, onAdmin, onContact }: Props) {
     // 本番環境では管理者リンクを非表示
     const isProduction = process.env.EXPO_PUBLIC_NODE_ENV === 'production'
 
@@ -20,6 +21,9 @@ export default function Footer({ onTerms, onPrivacy, onAdmin }: Props) {
                 <Text style={styles.separator}>|</Text>
                 <TouchableOpacity onPress={onPrivacy}>
                     <Text style={styles.link}>プライバシーポリシー</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={onContact}>
+                    <Text style={styles.link}>お問い合わせ</Text>
                 </TouchableOpacity>
                 {/* 本番環境では非表示 */}
                 {!isProduction && (
