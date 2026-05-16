@@ -38,7 +38,7 @@
         "og:title": "NyaFeed｜猫だけ匿名掲示板",
         "og:description": "かわいい猫だけが流れる匿名掲示板",
         "og:type": "website",
-        "og:image": "./assets/icon.png",
+        "og:image": "https://nyafeed.app/ogp.png",
         "twitter:card": "summary_large_image",
         "twitter:title": "NyaFeed｜猫だけ匿名掲示板",
         "twitter:description": "かわいい猫だけが流れる匿名掲示板",
