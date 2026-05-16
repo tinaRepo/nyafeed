@@ -218,7 +218,7 @@ export default function ImagePickerComponent({ value, onChange }: Props) {
                 </View>
             ) : null}
 
-            <Text style={styles.skipNote}>
+            <Text style={styles.message}>
                 ※ 10分間に5回まで投稿可能です
             </Text>
         </View>
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#ef4444',
     },
-    skipNote: {
+    message: {
         marginTop: 6,
         fontSize: 11,
         color: '#bbb',

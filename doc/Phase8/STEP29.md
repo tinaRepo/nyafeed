@@ -15,7 +15,7 @@ api/
         └── contact.ts             ← 新規作成
 index.ts                           ← 変更（ルート登録）
 
-my-app/
+nyafeed/
 └── src/
     ├── screens/
     │   └── ContactScreen.tsx      ← 新規作成

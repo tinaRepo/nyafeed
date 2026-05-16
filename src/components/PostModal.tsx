@@ -19,14 +19,6 @@ import ImagePickerComponent, { PickedImage } from './ImagePicker';
 import { uploadImage } from '../lib/upload';
 import { createPost } from '../lib/api';
 
-const DUMMY_IMAGE_POOL = [
-    'https://placecats.com/406/300',
-    'https://placecats.com/407/300',
-    'https://placecats.com/408/300',
-    'https://placecats.com/409/300',
-    'https://placecats.com/410/300',
-];
-
 const DEFAULT_REACTIONS: Reactions = {
     cute: 0,
     sniff: 0,
@@ -38,8 +30,8 @@ const DEFAULT_REACTIONS: Reactions = {
 // アップロード状態をステップで管理
 type UploadState =
     | { status: 'idle' }
-    | { status: 'uploading_image' }   // R2アップロード中
     | { status: 'checking_image' }    // VISION API画像確認中
+    | { status: 'uploading_image' }   // R2アップロード中
     | { status: 'saving_post' }       // API保存中
     | { status: 'error'; message: string }
 
@@ -75,20 +67,14 @@ export default function PostModal({ visible, onClose, onSubmit }: Props) {
         try {
             let imageUrl: string
 
-            if (pickedImage) {
-                setUploadState({ status: 'uploading_image' })
-
-                // 最適化（リサイズ + WebP変換）してからアップロード
-                const optimized = await optimizeImage(pickedImage.uri, pickedImage.mimeType)
-                imageUrl = await uploadImage(optimized.uri, optimized.mimeType)
-
-            } else {
-                imageUrl = DUMMY_IMAGE_POOL[
-                    Math.floor(Math.random() * DUMMY_IMAGE_POOL.length)
-                ] as string
+            if (!pickedImage) {
+                setCommentError('画像を選択してください')
+                return
             }
 
             setUploadState({ status: 'checking_image' })
+            const optimized = await optimizeImage(pickedImage.uri, pickedImage.mimeType)
+            imageUrl = await uploadImage(optimized.uri, optimized.mimeType)
             const created = await createPost({
                 image_url: imageUrl,
                 comment: comment.trim(),
