@@ -3,9 +3,13 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 type Props = {
     onTerms: () => void;
     onPrivacy: () => void;
+    onAdmin: () => void;
 };
 
-export default function Footer({ onTerms, onPrivacy }: Props) {
+export default function Footer({ onTerms, onPrivacy, onAdmin }: Props) {
+    // 本番環境では管理者リンクを非表示
+    const isProduction = process.env.EXPO_PUBLIC_NODE_ENV === 'production'
+
     return (
         <View style={styles.footer}>
             <Text style={styles.copy}>© 2026 NyaFeed</Text>
@@ -17,6 +21,15 @@ export default function Footer({ onTerms, onPrivacy }: Props) {
                 <TouchableOpacity onPress={onPrivacy}>
                     <Text style={styles.link}>プライバシーポリシー</Text>
                 </TouchableOpacity>
+                {/* 本番環境では非表示 */}
+                {!isProduction && (
+                    <>
+                        <Text style={styles.separator}>|</Text>
+                        <TouchableOpacity onPress={onAdmin}>
+                            <Text style={[styles.link, { color: '#ccc' }]}>管理</Text>
+                        </TouchableOpacity>
+                    </>
+                )}
             </View>
         </View>
     )

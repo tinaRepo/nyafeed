@@ -25,10 +25,11 @@ import { useReactionMaster } from './src/hooks/useReactionMaster';
 import Footer from './src/components/Footer';
 import TermsScreen from './src/screens/TermsScreen';
 import PrivacyScreen from './src/screens/PrivacyScreen';
+import AdminScreen from './src/screens/AdminScreen';
 
 const LOAD_MORE_THRESHOLD = 300
 
-type Screen = 'feed' | 'terms' | 'privacy'
+type Screen = 'feed' | 'terms' | 'privacy' | 'admin'
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('feed')
@@ -164,6 +165,17 @@ export default function App() {
     )
   }
 
+  // 管理画面
+  if (screen === 'admin') {
+    return (
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+          <AdminScreen onBack={() => setScreen('feed')} />
+        </SafeAreaView>
+      </SafeAreaProvider>
+    )
+  }
+
   // フッターを含む通常のフィード画面
   return (
     // NOTE: EAS Build移行時は GestureHandlerRootView でラップする
@@ -181,6 +193,7 @@ export default function App() {
           <Footer
             onTerms={() => setScreen('terms')}
             onPrivacy={() => setScreen('privacy')}
+            onAdmin={() => setScreen('admin')}
           />
           <PostModal
             visible={modalVisible}

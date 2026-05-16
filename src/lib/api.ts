@@ -5,6 +5,32 @@ export const API_BASE_URL = 'http://localhost:3000'
 
 export type ReactionKey = 'cute' | 'sniff' | 'healing' | 'pressure' | 'fluffy'
 
+const ADMIN_PASSWORD = process.env.EXPO_PUBLIC_ADMIN_PASSWORD ?? ''
+
+const adminHeaders = () => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${ADMIN_PASSWORD}`,
+})
+
+export type AdminReportItem = {
+    postId: string
+    reportCount: number
+    post: {
+        id: string
+        imageUrl: string
+        comment: string
+        createdAt: string
+    } | null
+    reasons: { reason: string; createdAt: string }[]
+}
+
+export type AdminPostItem = {
+    id: string
+    imageUrl: string
+    comment: string
+    createdAt: string
+}
+
 export type VisionLabel = {
     description: string
     score: number
@@ -115,4 +141,35 @@ export const reportPost = async (
         throw new Error(error.error ?? `API error: ${res.status}`)
     }
     return res.json()
+}
+
+// GET /admin/reports
+export const getAdminReports = async (): Promise<AdminReportItem[]> => {
+    const res = await fetch(`${API_BASE_URL}/admin/reports`, {
+        headers: adminHeaders(),
+    })
+    if (!res.ok) throw new Error(`Admin auth failed: ${res.status}`)
+    return res.json()
+}
+
+// GET /admin/posts
+export const getAdminPosts = async (
+    offset = 0,
+    limit = 20,
+): Promise<AdminPostItem[]> => {
+    const res = await fetch(
+        `${API_BASE_URL}/admin/posts?offset=${offset}&limit=${limit}`,
+        { headers: adminHeaders() }
+    )
+    if (!res.ok) throw new Error(`Admin auth failed: ${res.status}`)
+    return res.json()
+}
+
+// DELETE /admin/posts/:id
+export const deleteAdminPost = async (postId: string): Promise<void> => {
+    const res = await fetch(`${API_BASE_URL}/admin/posts/${postId}`, {
+        method: 'DELETE',
+        headers: adminHeaders(),
+    })
+    if (!res.ok) throw new Error(`Delete failed: ${res.status}`)
 }
