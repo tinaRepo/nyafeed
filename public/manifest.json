@@ -1,7 +1,8 @@
 {
-    "name": "NyaFeed",
+    "name": "NyaFeed - 猫しか投稿できない匿名掲示板",
     "short_name": "NyaFeed",
-    "description": "かわいい猫だけが流れる匿名掲示板",
+    "description": "NyaFeedは、猫画像だけが流れる匿名掲示板です。フォローなし、DMなし、ただ猫を眺めるための癒し空間。",
+    "lang": "ja",
     "icons": [
         {
             "src": "/icon-192.png",
@@ -19,5 +20,6 @@
     "theme_color": "#f97316",
     "background_color": "#ffffff",
     "display": "standalone",
-    "start_url": "/"
+    "start_url": "/",
+    "scope": "/"
 }
